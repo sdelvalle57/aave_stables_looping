@@ -14,18 +14,19 @@ export function WalletTest() {
 
   return (
     <div className="space-y-4 p-6 border rounded-lg">
-      <h2 className="text-xl font-semibold">Wallet Connection Test</h2>
-      
+
       <div className="space-y-2">
-        <ConnectButton />
-        
+        <div className="flex justify-center">
+          <ConnectButton />
+        </div>
+
         {isConnected && (
           <div className="space-y-2 text-sm">
             <p><strong>Address:</strong> {address}</p>
             <p><strong>Chain ID:</strong> {chainId}</p>
             <p><strong>Chain Name:</strong> {chainConfig?.name || 'Unknown'}</p>
             <p><strong>Supported:</strong> {isSupported ? '✅ Yes' : '❌ No'}</p>
-            
+
             {contractAddresses && (
               <div>
                 <p><strong>Contract Addresses:</strong></p>
@@ -35,7 +36,7 @@ export function WalletTest() {
                 </ul>
               </div>
             )}
-            
+
             <Button onClick={() => disconnect()} variant="outline" size="sm">
               Disconnect
             </Button>

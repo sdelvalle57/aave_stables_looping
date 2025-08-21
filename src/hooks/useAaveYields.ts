@@ -44,7 +44,7 @@ export function useAaveYields(params?: UseAaveYieldsParams) {
     [inputChains]
   );
   const assets = useMemo(
-    () => normalizeAssets(inputAssets ?? ['USDC', 'USDT', 'DAI', 'FRAX']),
+    () => normalizeAssets(inputAssets ?? ['USDC', 'USDT', 'DAI']),
     [inputAssets]
   );
 

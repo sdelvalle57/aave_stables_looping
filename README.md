@@ -2,7 +2,7 @@
 
 Real-time dashboard for stablecoin yields, looping spreads, and risk across top chains and protocols.
 
-Key protocols: Aave v3, Curve/Convex, MakerDAO DSR, Pendle. Focus assets: USDC, USDT, DAI, FRAX.
+Key protocols: Aave v3, Curve/Convex, MakerDAO DSR, Pendle. Focus assets: USDC, USDT, DAI.
 
 Specs: [requirements.md](.kiro/specs/stablecoin-yield-monitor/requirements.md) • [design.md](.kiro/specs/stablecoin-yield-monitor/design.md) • [tasks.md](.kiro/specs/stablecoin-yield-monitor/tasks.md)
 

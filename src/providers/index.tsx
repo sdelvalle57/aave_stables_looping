@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { wagmiConfig } from '../lib/wagmi';
+import { useUIStore } from '@/store/ui';
 
 // Import RainbowKit styles
 import '@rainbow-me/rainbowkit/styles.css';
@@ -21,10 +22,21 @@ const queryClient = new QueryClient({
 
 interface ProvidersProps {
   children: ReactNode;
-  isDarkMode?: boolean;
 }
 
-export function Providers({ children, isDarkMode = false }: ProvidersProps) {
+export function Providers({ children }: ProvidersProps) {
+  const isDarkMode = useUIStore((s) => s.darkMode);
+
+  // Sync Tailwind's `.dark` class with store-driven dark mode
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('dark', isDarkMode);
+    // Hint to UA for form controls, scrollbars, etc.
+    try {
+      root.style.colorScheme = isDarkMode ? 'dark' : 'light';
+    } catch {}
+  }, [isDarkMode]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={wagmiConfig}>

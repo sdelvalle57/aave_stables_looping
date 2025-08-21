@@ -14,7 +14,7 @@ The Stablecoin Yield Monitor is a production-ready React application that provid
 
 1. WHEN the application loads THEN the system SHALL display a dashboard with yield data from Ethereum mainnet, Arbitrum One, Optimism, and Polygon PoS
 2. WHEN I select specific chains THEN the system SHALL filter and display data only for the selected networks
-3. WHEN I apply stablecoin filters THEN the system SHALL show data only for USDC, USDT, DAI, and FRAX tokens
+3. WHEN I apply stablecoin filters THEN the system SHALL show data only for USDC, USDT, and DAI tokens
 4. WHEN yield data is available THEN the system SHALL display cards showing best Aave stable supply APY, borrow APY, spread, top boosted Curve APY, and DSR
 5. WHEN utilization exceeds 90% OR caps exceed 95% THEN the system SHALL display health warning badges
 

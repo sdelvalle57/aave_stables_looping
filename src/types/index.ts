@@ -94,7 +94,7 @@ export const queryKeys = {
 
 // Type guards
 export const isStablecoinAsset = (asset: string): asset is StablecoinAsset => {
-  return ['USDC', 'USDT', 'DAI', 'FRAX'].includes(asset);
+  return ['USDC', 'USDT', 'DAI'].includes(asset);
 };
 
 export const isProtocol = (protocol: string): protocol is Protocol => {

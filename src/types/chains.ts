@@ -1,5 +1,5 @@
 // Supported stablecoin assets
-export type StablecoinAsset = 'USDC' | 'USDT' | 'DAI' | 'FRAX';
+export type StablecoinAsset = 'USDC' | 'USDT' | 'DAI';
 
 // Protocol types
 export type Protocol = 'aave' | 'curve' | 'convex' | 'makerdao' | 'pendle';
@@ -63,19 +63,8 @@ export const STABLECOIN_METADATA: Record<StablecoinAsset, {
       10: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
       137: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063'
     }
-  },
-  FRAX: {
-    name: 'Frax',
-    symbol: 'FRAX',
-    decimals: 18,
-    addresses: {
-      1: '0x853d955aCEf822Db058eb8505911ED77F175b99e',
-      42161: '0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F',
-      10: '0x2E3D870790dC77A83DD1d18184Acc7439A53f475',
-      137: '0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89'
-    }
   }
-} as const;
+ } as const;
 
 // Contract addresses by chain
 export interface ContractAddresses {

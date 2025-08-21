@@ -28,7 +28,7 @@
   - Set up query invalidation and background refetching
   - _Requirements: 8.4, 7.4, 6.5_
 
-- [ ] 5. Implement Aave v3 data provider with contract integration
+- [x] 5. Implement Aave v3 data provider with contract integration
   - Create AaveDataProvider class implementing DataProvider interface
   - Add UiPoolDataProviderV3 and AaveProtocolDataProvider ABI definitions
   - Implement getReserveData method with viem contract reads
@@ -36,7 +36,7 @@
   - Create utilization and caps percentage calculations
   - _Requirements: 6.2, 6.3, 9.1, 9.2, 9.3, 1.1, 2.2_
 
-- [ ] 6. Build core yield calculation functions
+- [x] 6. Build core yield calculation functions
   - Implement calculateLoopAPY function with geometric series formula
   - Create health factor estimation using E-Mode LTV/LT parameters
   - Add net spread calculation (supply_borrowed - borrow)
@@ -44,10 +44,10 @@
   - Create validation for negative spread scenarios
   - _Requirements: 3.2, 3.3, 3.5, 9.4, 9.5_
 
-- [ ] 7. Create dashboard UI components and layout
+- [x] 7. Create dashboard UI components and layout
   - Build Dashboard page component with responsive grid layout
   - Implement ChainSelector multi-select component
-  - Create StablecoinFilter component for USDC/USDT/DAI/FRAX filtering
+  - Create StablecoinFilter component for USDC/USDT/DAI filtering
   - Build YieldCard components for best APY display
   - Add dark mode toggle and theme switching
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 7.1, 7.2_

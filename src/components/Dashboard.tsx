@@ -2,32 +2,30 @@ import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAaveYields } from '@/hooks/useAaveYields';
 import { useUIStore } from '@/store/ui';
-import { CHAIN_NAMES, type SupportedChainId } from '@/types';
+import { type SupportedChainId, type StablecoinAsset } from '@/types';
+import { ChainSelector } from '@/components/ChainSelector';
+import { StablecoinFilter } from './StablecoinFilter';
+import { YieldCard } from './YieldCard';
 
-const ALL_CHAINS: SupportedChainId[] = Object.keys(CHAIN_NAMES).map((k) => Number(k)) as SupportedChainId[];
 
-function formatPct(n: number, digits = 2) {
-  return `${n.toFixed(digits)}%`;
+function isFiniteNumber(x: unknown): x is number {
+  return typeof x === 'number' && Number.isFinite(x);
 }
 
-function pctBig(n: bigint, d: bigint): number {
-  if (d === 0n) return 0;
-  // Convert to Number for display purposes (may lose precision for very large values)
-  const nn = Number(n);
-  const dd = Number(d);
-  return dd === 0 ? 0 : (nn / dd) * 100;
-}
 
 export function Dashboard() {
   const selectedChains = useUIStore((s) => s.selectedChains) as SupportedChainId[];
-  const setSelectedChains = useUIStore((s) => s.setSelectedChains);
+  const selectedAssets = useUIStore((s) => s.selectedAssets) as StablecoinAsset[];
   const autoRefresh = useUIStore((s) => s.autoRefresh);
   const setAutoRefresh = useUIStore((s) => s.setAutoRefresh);
   const refreshInterval = useUIStore((s) => s.refreshInterval);
   const setRefreshInterval = useUIStore((s) => s.setRefreshInterval);
+  const darkMode = useUIStore((s) => s.darkMode);
+  const toggleDarkMode = useUIStore((s) => s.toggleDarkMode);
 
   const { data, isLoading, isFetching, error } = useAaveYields({
     chains: selectedChains as SupportedChainId[],
+    assets: selectedAssets,
     refetchInterval: autoRefresh ? Math.max(5, refreshInterval) * 1000 : false,
   });
 
@@ -35,31 +33,36 @@ export function Dashboard() {
     return (data ?? []).slice().sort((a, b) => (b.supplyAPY - b.borrowAPY) - (a.supplyAPY - a.borrowAPY));
   }, [data]);
 
-  const toggleChain = (chainId: SupportedChainId) => {
-    const next = selectedChains.includes(chainId)
-      ? selectedChains.filter((c) => c !== chainId)
-      : [...selectedChains, chainId];
-    setSelectedChains(next as SupportedChainId[]);
-  };
+  // Ensure only selected chains are rendered, and drop invalid/NaN rows defensively
+  const filteredRows = useMemo(() => {
+    const sel = new Set(selectedChains as SupportedChainId[]);
+    return spreadSorted.filter((row) => {
+      const chainOk = sel.has(row.chain as SupportedChainId);
+      const apyOk =
+        isFiniteNumber(row.supplyAPY) &&
+        isFiniteNumber(row.borrowAPY) &&
+        isFiniteNumber(row.utilization);
+      return chainOk && apyOk;
+    });
+  }, [spreadSorted, selectedChains]);
+
 
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-semibold">Chains:</span>
-        {ALL_CHAINS.map((cid) => {
-          const active = selectedChains.includes(cid);
-          return (
-            <Button
-              key={cid}
-              variant={active ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => toggleChain(cid)}
-            >
-              {CHAIN_NAMES[cid]}
-            </Button>
-          );
-        })}
+        <ChainSelector />
+        <StablecoinFilter />
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-sm font-semibold">Theme:</span>
+          <Button
+            variant={darkMode ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => toggleDarkMode()}
+          >
+            {darkMode ? 'Dark' : 'Light'}
+          </Button>
+        </div>
       </div>
 
 
@@ -100,88 +103,15 @@ export function Dashboard() {
             {(error as Error).message ?? 'Failed to load yields'}
           </div>
         )}
+        {!isLoading && !error && filteredRows.length === 0 && (
+          <div className="text-sm text-muted-foreground">No matching yields for current filters.</div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {spreadSorted.map((row, idx) => {
-          const spread = row.supplyAPY - row.borrowAPY;
-          const supplyCapPct = pctBig(row.totalSupply, row.supplyCap);
-          const borrowCapPct = pctBig(row.totalBorrow, row.borrowCap);
-          const highUtil = row.utilization >= 90;
-          const highSupplyCap = supplyCapPct >= 95;
-          const highBorrowCap = borrowCapPct >= 95;
-
-          return (
-            <div key={`${row.chain}-${row.asset}-${idx}`} className="p-4 border rounded-lg space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="font-semibold">
-                  {CHAIN_NAMES[row.chain as SupportedChainId]} · {row.asset}
-                </div>
-                <div className="text-xs text-muted-foreground">Aave v3</div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <div className="text-muted-foreground">Supply APY</div>
-                  <div className="font-medium">{formatPct(row.supplyAPY * 100)}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Borrow APY</div>
-                  <div className="font-medium">{formatPct(row.borrowAPY * 100)}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Spread</div>
-                  <div className={`font-medium ${spread < 0 ? 'text-red-600' : ''}`}>
-                    {formatPct(spread * 100)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Utilization</div>
-                  <div className={`font-medium ${highUtil ? 'text-yellow-600' : ''}`}>
-                    {formatPct(row.utilization, 2)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Supply cap used</div>
-                  <div className={`font-medium ${highSupplyCap ? 'text-yellow-600' : ''}`}>
-                    {formatPct(supplyCapPct, 2)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Borrow cap used</div>
-                  <div className={`font-medium ${highBorrowCap ? 'text-yellow-600' : ''}`}>
-                    {formatPct(borrowCapPct, 2)}
-                  </div>
-                </div>
-              </div>
-
-              {(highUtil || highSupplyCap || highBorrowCap || spread < 0) && (
-                <div className="text-xs">
-                  {highUtil && (
-                    <span className="mr-2 rounded bg-yellow-100 px-2 py-0.5 text-yellow-800">
-                      High utilization
-                    </span>
-                  )}
-                  {highSupplyCap && (
-                    <span className="mr-2 rounded bg-yellow-100 px-2 py-0.5 text-yellow-800">
-                      Supply cap &gt;=95%
-                    </span>
-                  )}
-                  {highBorrowCap && (
-                    <span className="mr-2 rounded bg-yellow-100 px-2 py-0.5 text-yellow-800">
-                      Borrow cap &gt;=95%
-                    </span>
-                  )}
-                  {spread < 0 && (
-                    <span className="mr-2 rounded bg-red-100 px-2 py-0.5 text-red-800">
-                      Negative spread
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {filteredRows.map((row, idx) => (
+          <YieldCard key={`${row.chain}-${row.asset}-${idx}`} row={row} />
+        ))}
       </div>
     </div>
   );

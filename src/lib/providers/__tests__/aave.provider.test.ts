@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => {
 vi.mock('viem', () => ({
   createPublicClient: mocks.createPublicClientMock,
   http: mocks.httpMock,
+  // Minimal getAddress passthrough for tests (no checksum enforcement needed here)
+  getAddress: (addr: string) => addr,
 }));
 
 import { CONTRACT_ADDRESSES } from '../../chains';

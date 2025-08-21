@@ -14,10 +14,34 @@ import type {
   AlertRule,
   AlertNotification,
 } from '@/types/domain';
-import { isSupportedChainId } from '@/types';
+import { isSupportedChainId, isStablecoinAsset } from '@/types';
+
+// JSON serialization helpers for BigInt
+function bigintReplacer(_key: string, value: unknown) {
+  if (typeof value === 'bigint') {
+    return { __type: 'bigint', value: value.toString() };
+  }
+  return value;
+}
+
+function bigintReviver(_key: string, value: unknown) {
+  if (
+    value &&
+    typeof value === 'object' &&
+    (value as any).__type === 'bigint' &&
+    typeof (value as any).value === 'string'
+  ) {
+    try {
+      return BigInt((value as any).value);
+    } catch {
+      return 0n;
+    }
+  }
+  return value;
+}
 
 const ALL_CHAINS: Chain[] = [1, 42161, 10, 137];
-const ALL_ASSETS: StablecoinAsset[] = ['USDC', 'USDT', 'DAI', 'FRAX'];
+const ALL_ASSETS: StablecoinAsset[] = ['USDC', 'USDT', 'DAI'];
 const DEFAULT_PROTOCOLS: Protocol[] = ['aave'];
 
 const DEFAULT_CALCULATOR_PARAMS: LoopCalculatorParams = {
@@ -65,7 +89,9 @@ export const useUIStore = create<Store>()(
           selectedChains: chains.filter((c) => isSupportedChainId(c)),
         })),
       setSelectedAssets: (assets: StablecoinAsset[]) =>
-        set(() => ({ selectedAssets: assets })),
+        set(() => ({
+          selectedAssets: assets.filter((a) => isStablecoinAsset(a)),
+        })),
       setSelectedProtocols: (protocols: Protocol[]) =>
         set(() => ({ selectedProtocols: protocols })),
 
@@ -156,8 +182,11 @@ export const useUIStore = create<Store>()(
     }),
     {
       name: 'ui-store',
-      version: 1,
-      storage: createJSONStorage(() => localStorage),
+      version: 3,
+      storage: createJSONStorage(() => localStorage, {
+        replacer: bigintReplacer,
+        reviver: bigintReviver,
+      }),
       partialize: (state) => {
         const {
           selectedChains,
@@ -181,6 +210,42 @@ export const useUIStore = create<Store>()(
           calculatorParams,
           alertRules,
         } as PersistedUIState;
+      },
+      // migrate persisted state when bumping version
+      migrate: (persisted: any, version: number) => {
+        if (!persisted) return persisted;
+        if (version < 2) {
+          // Best-effort: if principal was serialized as plain string or number, coerce to BigInt
+          const p = persisted?.calculatorParams?.principal;
+          if (typeof p === 'string') {
+            try {
+              persisted.calculatorParams.principal = BigInt(p);
+            } catch {
+              persisted.calculatorParams.principal = 0n;
+            }
+          } else if (typeof p === 'number') {
+            persisted.calculatorParams.principal = BigInt(Math.trunc(p));
+          }
+        }
+        if (version < 3) {
+          // Remove any deprecated assets (e.g., FRAX) from persisted selection
+          const assets = persisted?.selectedAssets;
+          if (Array.isArray(assets)) {
+            persisted.selectedAssets = assets.filter((a: unknown) =>
+              typeof a === 'string' && isStablecoinAsset(a)
+            );
+          }
+          // Ensure default calculator assets are valid
+          const dep = persisted?.calculatorParams?.depositAsset;
+          if (dep && typeof dep === 'string' && !isStablecoinAsset(dep)) {
+            persisted.calculatorParams.depositAsset = 'USDC';
+          }
+          const bor = persisted?.calculatorParams?.borrowAsset;
+          if (bor && typeof bor === 'string' && !isStablecoinAsset(bor)) {
+            persisted.calculatorParams.borrowAsset = 'USDC';
+          }
+        }
+        return persisted;
       },
     }
   )

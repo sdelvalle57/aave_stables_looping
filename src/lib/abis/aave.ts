@@ -465,12 +465,76 @@ export const AaveProtocolDataProviderABI = [
     ],
     stateMutability: 'view',
     type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'asset',
+        type: 'address'
+      }
+    ],
+    name: 'getReserveConfigurationData',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: 'decimals',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'ltv',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'liquidationThreshold',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'liquidationBonus',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'reserveFactor',
+        type: 'uint256'
+      },
+      {
+        internalType: 'bool',
+        name: 'usageAsCollateralEnabled',
+        type: 'bool'
+      },
+      {
+        internalType: 'bool',
+        name: 'borrowingEnabled',
+        type: 'bool'
+      },
+      {
+        internalType: 'bool',
+        name: 'stableBorrowRateEnabled',
+        type: 'bool'
+      },
+      {
+        internalType: 'bool',
+        name: 'isActive',
+        type: 'bool'
+      },
+      {
+        internalType: 'bool',
+        name: 'isFrozen',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
   }
 ] as const;
 
 // Pool addresses provider addresses for each chain
 export const POOL_ADDRESSES_PROVIDER = {
-  1: '0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e', // Ethereum
+  1: '0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e', // Ethereum (Aave v3 mainnet)
   42161: '0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb', // Arbitrum
   10: '0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb', // Optimism
   137: '0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb', // Polygon

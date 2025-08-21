@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { useAaveYieldsFromStore } from '@/hooks/useAaveYields';
+import { useAaveYields } from '@/hooks/useAaveYields';
 import { useUIStore } from '@/store/ui';
-import { CHAIN_NAMES, type SupportedChainId, type StablecoinAsset } from '@/types';
+import { CHAIN_NAMES, type SupportedChainId } from '@/types';
 
-const ALL_ASSETS: StablecoinAsset[] = ['USDC', 'USDT', 'DAI', 'FRAX'];
 const ALL_CHAINS: SupportedChainId[] = Object.keys(CHAIN_NAMES).map((k) => Number(k)) as SupportedChainId[];
 
 function formatPct(n: number, digits = 2) {
@@ -21,15 +20,16 @@ function pctBig(n: bigint, d: bigint): number {
 
 export function Dashboard() {
   const selectedChains = useUIStore((s) => s.selectedChains) as SupportedChainId[];
-  const selectedAssets = useUIStore((s) => s.selectedAssets);
   const setSelectedChains = useUIStore((s) => s.setSelectedChains);
-  const setSelectedAssets = useUIStore((s) => s.setSelectedAssets);
   const autoRefresh = useUIStore((s) => s.autoRefresh);
   const setAutoRefresh = useUIStore((s) => s.setAutoRefresh);
   const refreshInterval = useUIStore((s) => s.refreshInterval);
   const setRefreshInterval = useUIStore((s) => s.setRefreshInterval);
 
-  const { data, isLoading, isFetching, error } = useAaveYieldsFromStore();
+  const { data, isLoading, isFetching, error } = useAaveYields({
+    chains: selectedChains as SupportedChainId[],
+    refetchInterval: autoRefresh ? Math.max(5, refreshInterval) * 1000 : false,
+  });
 
   const spreadSorted = useMemo(() => {
     return (data ?? []).slice().sort((a, b) => (b.supplyAPY - b.borrowAPY) - (a.supplyAPY - a.borrowAPY));
@@ -42,12 +42,6 @@ export function Dashboard() {
     setSelectedChains(next as SupportedChainId[]);
   };
 
-  const toggleAsset = (asset: StablecoinAsset) => {
-    const next = selectedAssets.includes(asset)
-      ? selectedAssets.filter((a) => a !== asset)
-      : [...selectedAssets, asset];
-    setSelectedAssets(next);
-  };
 
   return (
     <div className="space-y-6">
@@ -68,22 +62,6 @@ export function Dashboard() {
         })}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-semibold">Assets:</span>
-        {ALL_ASSETS.map((asset) => {
-          const active = selectedAssets.includes(asset);
-          return (
-            <Button
-              key={asset}
-              variant={active ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => toggleAsset(asset)}
-            >
-              {asset}
-            </Button>
-          );
-        })}
-      </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm font-semibold">Auto refresh:</span>

@@ -36,7 +36,7 @@ export const STABLECOIN_METADATA: Record<StablecoinAsset, {
     symbol: 'USDC',
     decimals: 6,
     addresses: {
-      1: '0xA0b86a33E6441b8C4505B8C4505B8C4505B8C4505', // Placeholder - will be updated with real addresses
+      1: '0xA0b86991C6218b36c1d19D4a2e9Eb0cE3606eB48', // Native USDC on Ethereum
       42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
       10: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
       137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'

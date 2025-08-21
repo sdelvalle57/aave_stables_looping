@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 // Type tests to ensure all interfaces work correctly
 import { describe, it, expect } from 'vitest';
 import type {
@@ -90,5 +91,24 @@ describe('Type Definitions', () => {
     // This test just validates that the types compile correctly
     // The actual functionality will be tested in integration tests
     expect(true).toBe(true);
+  });
+it('should have valid stablecoin address maps for supported chains', async () => {
+    const { STABLECOIN_METADATA, CHAIN_NAMES } = await import('../chains');
+    const supportedChains = Object.keys(CHAIN_NAMES).map((k) => Number(k));
+    const hex40 = /^0x[a-fA-F0-9]{40}$/;
+
+    for (const [asset, meta] of Object.entries(STABLECOIN_METADATA)) {
+      expect(meta.addresses).toBeTruthy();
+      for (const chainId of supportedChains) {
+        const addr = (meta.addresses as any)[chainId as unknown as number] as string | undefined;
+        expect(addr, `Missing address for ${asset} on chain ${chainId}`).toBeTruthy();
+        expect(hex40.test(addr as string), `Invalid address for ${asset} on chain ${chainId}: ${addr}`).toBe(true);
+      }
+    }
+  });
+
+  it('USDC mainnet address should match canonical address', async () => {
+    const { STABLECOIN_METADATA } = await import('../chains');
+    expect(STABLECOIN_METADATA.USDC.addresses[1]).toBe('0xA0b86991C6218b36c1d19D4a2e9Eb0cE3606eB48');
   });
 });

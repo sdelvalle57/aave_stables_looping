@@ -17,9 +17,23 @@ function getOrCreateClient(chainId: number) {
     throw new Error(`Unsupported chain ID: ${chainId}`);
   }
 
+  // Prefer Alchemy URL when key is valid, otherwise fallback to default RPC
+  function pickRpcUrl(urls: any) {
+    const alchemy = urls?.alchemy?.http?.[0] as string | undefined;
+    const isClearlyInvalid =
+      !alchemy ||
+      alchemy.includes('/undefined') ||
+      // Covers placeholder from .env.example
+      alchemy.includes('your_alchemy_api_key_here') ||
+      // Heuristic: truncated keys (Alchemy keys are usually >= 20 chars)
+      alchemy.endsWith('/v2/') ||
+      alchemy.split('/v2/')[1]?.length < 20;
+    return isClearlyInvalid ? urls?.default?.http?.[0] : alchemy;
+  }
+
   const client = createPublicClient({
     chain: chainConfig,
-    transport: http(chainConfig.rpcUrls.alchemy.http[0]),
+    transport: http(pickRpcUrl((chainConfig as any).rpcUrls)),
   });
 
   publicClients[chainId] = client;

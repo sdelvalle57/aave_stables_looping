@@ -28,7 +28,7 @@
   - Set up query invalidation and background refetching
   - _Requirements: 8.4, 7.4, 6.5_
 
-- [-] 5. Implement Aave v3 data provider with contract integration
+- [ ] 5. Implement Aave v3 data provider with contract integration
   - Create AaveDataProvider class implementing DataProvider interface
   - Add UiPoolDataProviderV3 and AaveProtocolDataProvider ABI definitions
   - Implement getReserveData method with viem contract reads

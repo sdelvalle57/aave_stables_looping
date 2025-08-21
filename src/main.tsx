@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.tsx';
 import { Providers } from './providers';
+import { validateConfig } from './lib/validateConfig';
+
+validateConfig();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

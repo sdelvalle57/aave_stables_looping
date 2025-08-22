@@ -8,6 +8,10 @@ import { useMarketAPY } from '@/hooks/useMarketAPY';
 import { useLoopCalculation, useNetSpread } from '@/hooks/useCalculator';
 import { invertLeverageToLTVPercent, computeTotals, leverageFromLTVPercent } from '@/lib/leverage';
 import { formatPercentFromDecimal, formatPercentNumber } from '@/lib/utils';
+import { estimateHealthFactor, runDepegStress } from '@/lib/calculations';
+import { deriveEffectiveRiskParams } from '@/hooks/useRiskParams';
+import { HealthBadge } from '@/components/HealthBadge';
+import { RiskBands } from './RiskBands';
 
 const ALL_ASSETS: StablecoinAsset[] = ['USDC', 'USDT', 'DAI'];
 
@@ -15,6 +19,12 @@ const ALL_ASSETS: StablecoinAsset[] = ['USDC', 'USDT', 'DAI'];
 function formatAmount(n: number, digits = 2): string {
   if (!Number.isFinite(n)) return '—';
   return n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
+// Health factor formatting
+function formatHF(n: number): string {
+  if (!Number.isFinite(n)) return '∞';
+  return n.toFixed(2);
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -72,6 +82,7 @@ export function LoopCalculator() {
 
   const setLoops = (n: number) => update({ loops: Math.max(1, Math.min(5, Math.floor(n))) });
   const setLTV = (pct: number) => update({ targetLTV: Math.max(0, Math.min(90, Math.round(pct))) });
+  const [stressPct, setStressPct] = useState(0.5); // percent (0..1)
 
   const commitPrincipal = useCallback(() => {
     const val = Number.isFinite(principalInput) ? Math.max(0, Math.floor(principalInput)) : 0;
@@ -127,6 +138,58 @@ export function LoopCalculator() {
 
   const netAPY = loopCalc.data?.netAPY ?? 0;
   const annualProfit = principalNumber * netAPY;
+
+  // Effective risk params (E-Mode defaults for stable-stable, else base deposit params)
+  const effectiveRisk = useMemo(
+    () =>
+      deriveEffectiveRiskParams({
+        chain: params.chain as SupportedChainId,
+        depositAsset: params.depositAsset,
+        borrowAsset: params.borrowAsset,
+        depositParams: apy.depositParams,
+        borrowParams: apy.borrowParams,
+      }),
+    [
+      params.chain,
+      params.depositAsset,
+      params.borrowAsset,
+      apy.depositParams,
+      apy.borrowParams,
+    ]
+  );
+
+  // Build HF inputs using proportional scaling (units cancel in ratio)
+  const { collateralBI, debtBI } = useMemo(() => {
+    const c = Math.max(0, Math.floor(totals.totalSupplied * 1e6));
+    const d = Math.max(0, Math.floor(totals.totalBorrowed * 1e6));
+    return { collateralBI: BigInt(c), debtBI: BigInt(d) };
+  }, [totals.totalSupplied, totals.totalBorrowed]);
+
+  const baseHF = useMemo(
+    () =>
+      estimateHealthFactor({
+        totalCollateralETH: collateralBI,
+        totalDebtETH: debtBI,
+        liquidationThreshold: effectiveRisk.liquidationThreshold,
+      }),
+    [collateralBI, debtBI, effectiveRisk.liquidationThreshold]
+  );
+
+  const hfParams = useMemo(
+    () => ({
+      totalCollateralETH: collateralBI,
+      totalDebtETH: debtBI,
+      liquidationThreshold: effectiveRisk.liquidationThreshold,
+    }),
+    [collateralBI, debtBI, effectiveRisk.liquidationThreshold]
+  );
+
+  const stressDown = useMemo(() => runDepegStress(hfParams, stressPct, 'down'), [hfParams, stressPct]);
+  const stressUp = useMemo(() => runDepegStress(hfParams, stressPct, 'up'), [hfParams, stressPct]);
+
+  const baseRiskLevel: 'low' | 'medium' | 'high' | 'critical' = useMemo(() => {
+    return baseHF < 1 ? 'critical' : baseHF < 1.1 ? 'high' : baseHF < 1.3 ? 'medium' : 'low';
+  }, [baseHF]);
 
   // Bi-directional leverage input: updates LTV
   const onLeverageChange = (val: number) => {
@@ -266,8 +329,79 @@ export function LoopCalculator() {
               {formatAmount(annualProfit, 2)}
             </div>
           </div>
+          <div className="p-3 border rounded-md">
+            <div className="text-muted-foreground">Health factor</div>
+            <HealthBadge value={baseHF} />
+          </div>
+          <div className="p-3 border rounded-md">
+            <div className="text-muted-foreground">Effective LT</div>
+            <div className="font-medium">{formatPercentNumber(effectiveRisk.liquidationThreshold, 0)}</div>
+          </div>
+          <div className="p-3 border rounded-md">
+            <div className="text-muted-foreground">Risk level</div>
+            <div
+              className={`font-medium ${
+                baseRiskLevel === 'critical'
+                  ? 'text-red-600'
+                  : baseRiskLevel === 'high'
+                  ? 'text-red-600'
+                  : baseRiskLevel === 'medium'
+                  ? 'text-yellow-600'
+                  : 'text-green-700'
+              }`}
+            >
+              {baseRiskLevel}
+            </div>
+          </div>
         </div>
 
+        {/* Depeg stress controls and results */}
+        <div className="mt-4 space-y-3">
+          <div className="text-sm font-medium">Depeg stress</div>
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.1}
+              value={stressPct}
+              onChange={(e) => setStressPct(Number(e.target.value))}
+              className="w-56"
+            />
+            <span className="text-sm w-16 text-center">{formatPercentNumber(stressPct, 1)}</span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setStressPct(0.5)}>
+                ±0.5%
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setStressPct(1)}>
+                ±1%
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="p-3 border rounded-md">
+              <div className="text-muted-foreground">Stress down</div>
+              <HealthBadge value={stressDown.resultingHealthFactor} />
+            </div>
+            <div className="p-3 border rounded-md">
+              <div className="text-muted-foreground">Base</div>
+              <HealthBadge value={baseHF} />
+            </div>
+            <div className="p-3 border rounded-md">
+              <div className="text-muted-foreground">Stress up</div>
+              <HealthBadge value={stressUp.resultingHealthFactor} />
+            </div>
+          </div>
+        </div>
+
+{/* Risk bands visualization */}
+          <RiskBands
+            baseHF={baseHF}
+            downHF={stressDown.resultingHealthFactor}
+            upHF={stressUp.resultingHealthFactor}
+            className="mt-2"
+          />
         {spread.hasNegativeSpread && (
           <div className="text-xs mt-2">
             <span className="mr-2 rounded bg-red-100 px-2 py-0.5 text-red-800">Negative spread</span>

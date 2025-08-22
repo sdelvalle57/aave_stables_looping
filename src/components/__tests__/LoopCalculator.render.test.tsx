@@ -101,3 +101,63 @@ describe('LoopCalculator render behavior', () => {
     expect(screen.getByText('Negative spread')).toBeInTheDocument();
   });
 });
+describe('LoopCalculator health factor and stress', () => {
+  beforeEach(() => {
+    // Default params and APYs (supply > borrow) from existing helpers
+    useUIStore.setState({
+      calculatorParams: {
+        chain: 1,
+        depositAsset: 'USDC',
+        borrowAsset: 'USDC',
+        principal: 10_000n,
+        targetLTV: 50,
+        loops: 1,
+        targetLeverage: 1,
+      },
+    } as any);
+    apyState.supplyAPY = 0.06;
+    apyState.borrowAPY = 0.03;
+  });
+
+  it('renders Health factor badge and RiskBands', () => {
+    render(<LoopCalculator />);
+
+    // Health factor label present
+    expect(screen.getByText('Health factor')).toBeInTheDocument();
+
+    // Risk bands tick labels present
+    expect(screen.getByText('1.0')).toBeInTheDocument();
+    expect(screen.getByText('2.5')).toBeInTheDocument();
+
+    // At least one HF badge visible
+    const badges = screen.getAllByText('HF');
+    expect(badges.length).toBeGreaterThan(0);
+  });
+
+  it('updates stressed HF when stress slider changes (via quick buttons)', () => {
+    const { rerender } = render(<LoopCalculator />);
+
+    // Helper to extract the text content of a metric card by its label
+    function getCardText(label: string): string {
+      const labelEl = screen.getByText(label);
+      const container =
+        labelEl.closest('.p-3') || labelEl.parentElement || undefined;
+      if (!container) throw new Error(`No container for label: ${label}`);
+      return (container.textContent || '').trim();
+    }
+
+    const beforeDown = getCardText('Stress down');
+
+    // Click quick button to set ±1%
+    fireEvent.click(screen.getByText('±1%'));
+    rerender(<LoopCalculator />);
+
+    const afterDown = getCardText('Stress down');
+
+    expect(afterDown).not.toEqual(beforeDown);
+
+    // Three badges should exist: down, base, up
+    const badges = screen.getAllByText('HF');
+    expect(badges.length).toBeGreaterThanOrEqual(3);
+  });
+});

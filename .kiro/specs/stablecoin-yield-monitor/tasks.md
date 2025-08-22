@@ -68,7 +68,7 @@
   - Display calculated metrics: total supplied, borrowed, current LTV, net APY, annual profit
   - _Requirements: 3.1, 3.2, 3.4_
 
-- [ ] 10. Add health factor and risk assessment features
+- [x] 10. Add health factor and risk assessment features
   - Implement health factor calculation and display
   - Create depeg stress sliders (±0.5%/±1%) with real-time updates
   - Add liquidation risk bands visualization

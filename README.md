@@ -124,3 +124,41 @@ Tech stack
 
 Notes
 - In development, config issues appear as warnings via [ConfigBanner()](src/components/ConfigBanner.tsx:5). In production, [validateConfig()](src/lib/validateConfig.ts:17) fails fast on invalid setup.
+
+## Health factor and risk assessment
+
+The Loop Calculator includes health factor (HF) estimation, depeg stress testing, and visual risk indicators.
+
+What it does
+- Computes leverage totals using [computeTotals()](src/lib/leverage.ts:93)
+- Derives effective risk params (LTV/LT) using stablecoin E‑Mode policy via [deriveEffectiveRiskParams()](src/hooks/useRiskParams.ts:34)
+  - Stable-stable pairs (USDC/USDT/DAI) default to E‑Mode: LTV 93%, LT 95%
+  - Otherwise falls back to the deposit asset’s base params from Aave reserve data
+- Estimates health factor using [estimateHealthFactor()](src/lib/calculations.ts:87)
+  - HF = (collateral * LT) / debt, with LT as percent (0–100)
+- Runs depeg stress tests via [runDepegStress()](src/lib/calculations.ts:106)
+  - Applies ±X% price shocks to collateral and recomputes HF
+  - Provides risk band classification and warning message when HF &lt; 1
+- Visualizes risk:
+  - Badge: [HealthBadge](src/components/HealthBadge.tsx) with color-coded levels
+  - Bands: [RiskBands](src/components/RiskBands.tsx) showing zones and markers (down/base/up)
+  - Negative spread badge next to Net APY when borrow ≥ supply
+
+Risk thresholds
+- critical: HF &lt; 1.0
+- high: 1.0 ≤ HF &lt; 1.1
+- medium: 1.1 ≤ HF &lt; 1.3
+- low: HF ≥ 1.3
+
+Depeg stress controls (Loop Calculator)
+- Slider: 0–1.0% (step 0.1%)
+- Quick toggles: ±0.5% and ±1.0%
+- Real-time updates to HF values and RiskBands markers
+
+Key code references
+- Effective params: [deriveEffectiveRiskParams()](src/hooks/useRiskParams.ts:34)
+- HF estimation: [estimateHealthFactor()](src/lib/calculations.ts:87)
+- Depeg stress: [runDepegStress()](src/lib/calculations.ts:106)
+- Calculator page: [LoopCalculator](src/components/LoopCalculator.tsx:1)
+- UI components: [HealthBadge](src/components/HealthBadge.tsx:1), [RiskBands](src/components/RiskBands.tsx:1)
+- Tests: [calculations_hf.test.ts](src/lib/__tests__/calculations_hf.test.ts:1), [riskParams.test.ts](src/hooks/__tests__/riskParams.test.ts:1), [LoopCalculator.render.test.tsx](src/components/__tests__/LoopCalculator.render.test.tsx:1)

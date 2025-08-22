@@ -9,9 +9,17 @@ export interface UseMarketAPYParams {
   refetchIntervalMs?: number | false;
 }
 
+export interface ReserveParams {
+  ltv: number;
+  liquidationThreshold: number;
+  eModeCategory?: number;
+}
+
 export interface MarketAPYResult {
   supplyAPY?: number; // decimal (e.g., 0.05)
   borrowAPY?: number; // decimal
+  depositParams?: ReserveParams;
+  borrowParams?: ReserveParams;
   isLoading: boolean;
   isFetching: boolean;
   error?: unknown;
@@ -44,6 +52,22 @@ export function useMarketAPY(params: UseMarketAPYParams): MarketAPYResult {
   const deposit = lookup.get(`${chain}-${depositAsset}`);
   const borrow = lookup.get(`${chain}-${borrowAsset}`);
 
+  const depositParams = deposit
+    ? {
+        ltv: deposit.ltv,
+        liquidationThreshold: deposit.liquidationThreshold,
+        eModeCategory: deposit.eModeCategory,
+      }
+    : undefined;
+
+  const borrowParams = borrow
+    ? {
+        ltv: borrow.ltv,
+        liquidationThreshold: borrow.liquidationThreshold,
+        eModeCategory: borrow.eModeCategory,
+      }
+    : undefined;
+
   const supplyAPY = deposit?.supplyAPY;
   const borrowAPY = borrow?.borrowAPY;
 
@@ -58,6 +82,8 @@ export function useMarketAPY(params: UseMarketAPYParams): MarketAPYResult {
   return {
     supplyAPY,
     borrowAPY,
+    depositParams,
+    borrowParams,
     isLoading,
     isFetching,
     error,

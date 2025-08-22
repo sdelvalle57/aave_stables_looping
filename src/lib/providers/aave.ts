@@ -126,14 +126,7 @@ export class AaveV3DataProvider implements AaveDataProvider {
       throw new Error(`No contract addresses configured for chain ${chain}`);
     }
 // Direct path via ProtocolDataProvider for stability across chains (forced)
-    try {
-      console.warn('[Aave] Entering direct ProtocolDataProvider path (forced)', {
-        chain,
-        asset,
-        provider: POOL_ADDRESSES_PROVIDER[chain as keyof typeof POOL_ADDRESSES_PROVIDER],
-        rpc: this.rpcUrls.get(chain),
-      });
-    } catch {}
+   
     return await this.fetchViaProtocolDataProvider(chain, asset, assetAddress);
  
     // Direct path via ProtocolDataProvider for stability across chains
@@ -604,14 +597,6 @@ export class AaveV3DataProvider implements AaveDataProvider {
       functionName: 'getPoolDataProvider',
     })) as `0x${string}`;
  
-    try {
-      console.warn('[Aave] Resolved ProtocolDataProvider (direct path)', {
-        chain,
-        asset,
-        poolDataProviderAddress,
-      });
-    } catch {}
- 
     // Helper to read and build result for a specific asset address
     const readAndBuild = async (effAddr: `0x${string}`): Promise<StablecoinYield> => {
       const [rd, caps, config] = (await Promise.all([
@@ -635,10 +620,6 @@ export class AaveV3DataProvider implements AaveDataProvider {
         }),
       ])) as unknown as [any, any, any];
 
-      console.log("rd", rd)
-      console.log("caps", caps)
-      console.log("config", config)
- 
       // viem can decode tuples as arrays; prefer named key then fallback to index.
       const pick = (obj: any, key: string, index: number) =>
         obj != null && (obj[key] ?? obj[index]);
@@ -668,19 +649,6 @@ export class AaveV3DataProvider implements AaveDataProvider {
       const liquidationThreshold = Number(pick(config, 'liquidationThreshold', 2)) / 100;
       const reserveFactor = Number(pick(config, 'reserveFactor', 4)) / 100;
       const borrowable = Boolean(pick(config, 'borrowingEnabled', 6));
- 
-      try {
-        console.warn('[Aave] ProtocolDataProvider result (direct path)', {
-          chain,
-          asset,
-          effAddr,
-          supplyAPY,
-          borrowAPY,
-          utilization,
-          totalSupply: totalSupply.toString(),
-          totalBorrow: totalBorrow.toString(),
-        });
-      } catch {}
  
       return {
         protocol: 'aave',

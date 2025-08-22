@@ -7,7 +7,9 @@ import { ChainSelector } from '@/components/ChainSelector';
 import { StablecoinFilter } from './StablecoinFilter';
 import { YieldCard } from './YieldCard';
 import { useLoopMonitorRows } from '@/hooks/useLoopMonitorRows';
-import { LoopMonitorTable } from './LoopMonitorTable';
+import { LoopMonitorTable } from '@/components/LoopMonitorTable';
+import { BoostedLPTable } from './BoostedLPTable';
+import { CurveTopApyCard } from './CurveTopApyCard';
 
 function isFiniteNumber(x: unknown): x is number {
   return typeof x === 'number' && Number.isFinite(x);
@@ -117,6 +119,14 @@ export function Dashboard() {
       <div className="space-y-2">
         <div className="text-sm font-semibold">Loop Monitor</div>
         <LoopMonitorTable rows={loopRows} isLoading={isLoading || loadingEMode} />
+      </div>
+
+      <div className="space-y-2">
+        <div className="text-sm font-semibold">Curve Pools</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <CurveTopApyCard />
+        </div>
+        <BoostedLPTable />
       </div>
     </div>
   );

@@ -31,6 +31,12 @@ export type {
   AlertNotification
 } from './domain';
 
+// UI types
+export type {
+  LoopMonitorRow,
+  SortDirection
+} from './ui';
+
 // Provider types
 export type {
   DataProvider,

@@ -6,12 +6,12 @@ import { type SupportedChainId, type StablecoinAsset } from '@/types';
 import { ChainSelector } from '@/components/ChainSelector';
 import { StablecoinFilter } from './StablecoinFilter';
 import { YieldCard } from './YieldCard';
-
+import { useLoopMonitorRows } from '@/hooks/useLoopMonitorRows';
+import { LoopMonitorTable } from './LoopMonitorTable';
 
 function isFiniteNumber(x: unknown): x is number {
   return typeof x === 'number' && Number.isFinite(x);
 }
-
 
 export function Dashboard() {
   const selectedChains = useUIStore((s) => s.selectedChains) as SupportedChainId[];
@@ -29,11 +29,11 @@ export function Dashboard() {
     refetchInterval: autoRefresh ? Math.max(5, refreshInterval) * 1000 : false,
   });
 
+  // Defensive filtering for the cards section
   const spreadSorted = useMemo(() => {
     return (data ?? []).slice().sort((a, b) => (b.supplyAPY - b.borrowAPY) - (a.supplyAPY - a.borrowAPY));
   }, [data]);
 
-  // Ensure only selected chains are rendered, and drop invalid/NaN rows defensively
   const filteredRows = useMemo(() => {
     const sel = new Set(selectedChains as SupportedChainId[]);
     return spreadSorted.filter((row) => {
@@ -46,7 +46,8 @@ export function Dashboard() {
     });
   }, [spreadSorted, selectedChains]);
 
-
+  // Build loop monitor pairs from the same yield data
+  const { rows: loopRows, loadingEMode } = useLoopMonitorRows(data ?? []);
 
   return (
     <div className="space-y-6">
@@ -64,7 +65,6 @@ export function Dashboard() {
           </Button>
         </div>
       </div>
-
 
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm font-semibold">Auto refresh:</span>
@@ -112,6 +112,11 @@ export function Dashboard() {
         {filteredRows.map((row, idx) => (
           <YieldCard key={`${row.chain}-${row.asset}-${idx}`} row={row} />
         ))}
+      </div>
+
+      <div className="space-y-2">
+        <div className="text-sm font-semibold">Loop Monitor</div>
+        <LoopMonitorTable rows={loopRows} isLoading={isLoading || loadingEMode} />
       </div>
     </div>
   );

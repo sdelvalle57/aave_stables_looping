@@ -278,6 +278,7 @@ export class AaveV3DataProvider implements AaveDataProvider {
       const liquidationThreshold =
         Number(reserveData!.reserveLiquidationThreshold) / 100;
       const reserveFactor = Number(reserveData!.reserveFactor) / 100;
+      const borrowable = !!reserveData!.borrowingEnabled;
 
       return {
         protocol: 'aave',
@@ -290,6 +291,7 @@ export class AaveV3DataProvider implements AaveDataProvider {
         totalBorrow,
         supplyCap,
         borrowCap,
+        borrowable,
         ltv,
         liquidationThreshold,
         reserveFactor,
@@ -444,6 +446,7 @@ export class AaveV3DataProvider implements AaveDataProvider {
         const ltv = Number(config.ltv) / 100;
         const liquidationThreshold = Number(config.liquidationThreshold) / 100;
         const reserveFactor = Number(config.reserveFactor) / 100;
+        const borrowable = !!(config as any).borrowingEnabled;
  
         try {
           console.warn('[Aave] ProtocolDataProvider result', {
@@ -468,6 +471,7 @@ export class AaveV3DataProvider implements AaveDataProvider {
           totalBorrow,
           supplyCap,
           borrowCap,
+          borrowable,
           ltv,
           liquidationThreshold,
           reserveFactor,
@@ -533,6 +537,7 @@ export class AaveV3DataProvider implements AaveDataProvider {
               const ltv = Number(config2.ltv) / 100;
               const liquidationThreshold = Number(config2.liquidationThreshold) / 100;
               const reserveFactor = Number(config2.reserveFactor) / 100;
+              const borrowable = !!(config2 as any).borrowingEnabled;
  
               try {
                 console.warn('[Aave] ProtocolDataProvider result (USDC.e fallback on OP)', {
@@ -558,6 +563,7 @@ export class AaveV3DataProvider implements AaveDataProvider {
                 totalBorrow,
                 supplyCap,
                 borrowCap,
+                borrowable,
                 ltv,
                 liquidationThreshold,
                 reserveFactor,
@@ -661,6 +667,7 @@ export class AaveV3DataProvider implements AaveDataProvider {
       const ltv = Number(pick(config, 'ltv', 1)) / 100;
       const liquidationThreshold = Number(pick(config, 'liquidationThreshold', 2)) / 100;
       const reserveFactor = Number(pick(config, 'reserveFactor', 4)) / 100;
+      const borrowable = Boolean(pick(config, 'borrowingEnabled', 6));
  
       try {
         console.warn('[Aave] ProtocolDataProvider result (direct path)', {
@@ -686,6 +693,7 @@ export class AaveV3DataProvider implements AaveDataProvider {
         totalBorrow,
         supplyCap,
         borrowCap,
+        borrowable,
         ltv,
         liquidationThreshold,
         reserveFactor,

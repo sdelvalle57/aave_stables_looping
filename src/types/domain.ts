@@ -8,7 +8,7 @@ export type { StablecoinAsset, Protocol, SupportedChainId } from './chains';
 // Chain type for better type safety
 export type Chain = SupportedChainId;
 
-// Core stablecoin yield data structure
+ // Core stablecoin yield data structure
 export interface StablecoinYield {
   protocol: Protocol;
   chain: Chain;
@@ -20,6 +20,9 @@ export interface StablecoinYield {
   totalBorrow: bigint;
   supplyCap: bigint;
   borrowCap: bigint;
+  // Whether borrowing is currently enabled for this reserve on the protocol/chain
+  // Optional to preserve backward compatibility with providers that don't set it.
+  borrowable?: boolean;
   ltv: number;
   liquidationThreshold: number;
   reserveFactor: number;

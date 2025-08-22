@@ -52,7 +52,7 @@
   - Add dark mode toggle and theme switching
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 7.1, 7.2_
 
-- [ ] 8. Implement loop monitoring table with health indicators
+- [x] 8. Implement loop monitoring table with health indicators
   - Create LoopMonitorTable component with sortable columns
   - Display supply asset, borrow asset, APYs, net spread, utilization
   - Add caps percentage and E-Mode LTV/LT columns
@@ -60,7 +60,7 @@
   - Create health warning badges for high utilization (>90%) and caps (>95%)
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 1.5_
 
-- [ ] 9. Build loop calculator interface and real-time calculations
+- [x] 9. Build loop calculator interface and real-time calculations
   - Create LoopCalculator page with parameter input forms
   - Implement chain, deposit asset, and borrow asset selectors
   - Add loops slider (1-5) and target LTV controls
